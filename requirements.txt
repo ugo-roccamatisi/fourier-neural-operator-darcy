@@ -3,3 +3,4 @@ neuraloperator
 numpy
 pandas
 matplotlib
+jupyter

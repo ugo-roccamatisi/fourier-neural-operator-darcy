@@ -1,39 +1,44 @@
-# TP : Fourier Neural Operator sur Darcy Flow
+# Fourier Neural Operator on Darcy flow
 
-Travaux pratiques d'apprentissage d'opérateurs : on apprend l'opérateur qui associe un champ de perméabilité $a(x,y)$ au champ de pression $u(x,y)$ solution de l'équation de Darcy, $-\nabla \cdot (a \nabla u) = f$. Le notebook s'inspire du notebook *Training on Darcy Flow* du bootcamp [NeuralOperator](https://github.com/neuraloperator/neuraloperator).
+Operator learning lab: learning the map from a permeability field $a(x,y)$ to the pressure field $u(x,y)$ solving the Darcy equation $-\nabla \cdot (a \nabla u) = f$, and comparing a (Tensorized) Fourier Neural Operator with a U-Net baseline, including on grids finer than the training grid. Based on the *Training on Darcy Flow* notebook of the [NeuralOperator](https://github.com/neuraloperator/neuraloperator) bootcamp.
 
-## Contenu
+![U-Net vs TFNO: resolution generalization and effect of the number of Fourier modes](docs/fno-vs-unet.png)
 
-- Rappels sur l'écoulement de Darcy et sur les Fourier Neural Operators (FNO, TFNO)
-- Chargement du dataset Darcy, visualisation des champs et du flux $\mathbf{v} = -a \nabla u$
-- Losses et métriques : L2 relative et H1
-- Baseline U-Net (CNN champ vers champ) vs (T)FNO
-- Test de généralisation en résolution (zero-shot super-resolution : entraînement en 16×16, test en 32×32)
-- Ablations sur 2 graines : loss d'entraînement, `n_modes`, capacité, TFNO vs FNO, budget de données
-- Test physique sur le flux et bonus Navier-Stokes (rollout temporel)
+## Highlights
 
-## Principaux résultats
+- **TFNO vs U-Net**: at the training resolution (16×16), the TFNO lowers the relative L2 error by 30% (0.19 vs 0.27) with **135 times fewer parameters** (23 k vs 3.12 M).
+- **Zero-shot super-resolution**: evaluated on 32×32 without retraining, the TFNO barely degrades (0.20) while the U-Net error triples (0.78), a global amplitude bias confirmed by the error spectrum.
+- **Controlled ablations** over 2 seeds, one parameter at a time: training loss (H1 improves gradients and the physical flux), number of Fourier modes (too many modes hurt resolution generalization), width, depth, TFNO vs full FNO, and data budget.
+- **Physical check on the flux** $\mathbf{v} = -a\nabla u$, and a **Navier-Stokes bonus**: a one-step FNO rolled out autoregressively over 20 time steps, with the error drift analyzed.
 
-| Modèle | params | test16 L2 | test32 L2 (zero-shot) |
+## Results
+
+| Model | Parameters | Test 16×16, L2 | Test 32×32 (zero-shot), L2 |
 |---|---:|---:|---:|
 | U-Net | 3.12 M | 0.266 | 0.776 |
 | TFNO | 23 k | 0.187 | 0.201 |
-| TFNO, 1000 éch., 50 époques | 23 k | 0.077 | 0.106 |
+| TFNO, 1000 samples, 50 epochs | 23 k | 0.077 | 0.106 |
 
-Le TFNO atteint une erreur plus faible avec environ 135 fois moins de paramètres et se dégrade peu en changeant de résolution, alors que le U-Net double son erreur en zero-shot. Tableau complet et interprétation dans le notebook.
+Mean over 2 seeds; the full table and its interpretation are in the notebook.
 
-## Structure
+## Repository layout
 
+```text
+.
+├── fno_darcy_flow.ipynb   # the lab, executed
+├── docs/                  # Figures used in this README
+└── requirements.txt
 ```
-ODL_lab_FNO_2026.ipynb   notebook du TP (exécuté)
-requirements.txt
-```
 
-## Lancer le notebook
+## Run it
 
 ```bash
 pip install -r requirements.txt
-jupyter notebook ODL_lab_FNO_2026.ipynb
+jupyter notebook fno_darcy_flow.ipynb
 ```
 
-Le dataset Darcy est téléchargé automatiquement par `neuraloperator`. Le notebook tourne sur CPU ; sur GPU, il suffit d'augmenter `n_train` et `n_epochs`.
+The Darcy dataset is downloaded automatically by `neuraloperator`. The notebook runs on CPU; on a GPU, simply increase `n_train` and `n_epochs`. The 64×64 test set could not be downloaded in the environment used for the saved run, so the notebook fell back to the 16×16 and 32×32 test sets; on Colab, all three load normally.
+
+## Context
+
+Lab of the deep learning course at Centrale Lille. The lab statement and starter code were provided by the teaching staff; the implementation choices, experiments and analysis are my own. More on my [portfolio](https://ugo-roccamatisi.github.io).
